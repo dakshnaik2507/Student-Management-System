@@ -1,0 +1,184 @@
+import tkinter as tk
+from tkinter import messagebox, scrolledtext
+import sqlite3
+
+class StudentManagementSystem:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Student Management System")
+        self.root.geometry("400x400+300+50")
+
+        # Connect to SQLite3 and create the students table if it doesn't exist
+        self.conn = sqlite3.connect("students.db")
+        self.cursor = self.conn.cursor()
+        self.create_table()
+
+        # Main container with light green background
+        main_frame = tk.Frame(self.root, bg="light green", padx=20, pady=20)
+        main_frame.pack(expand=True, fill=tk.BOTH)
+
+        # Heading inside the light green box
+        heading_label = tk.Label(main_frame, text="S.M.S", font=("Arial", 24, "bold"), bg="light green")
+        heading_label.pack(pady=10)
+
+        # Button box for CRUD operations inside the same light green box
+        button_frame = tk.Frame(main_frame, bg="light green")
+        button_frame.pack(pady=20)
+
+        tk.Button(button_frame, text="Add", width=15, font=("Arial", 14), command=self.open_add_page).pack(pady=5)
+        tk.Button(button_frame, text="View", width=15, font=("Arial", 14), command=self.view_students).pack(pady=5)
+        tk.Button(button_frame, text="Update", width=15, font=("Arial", 14), command=self.update_student).pack(pady=5)
+        tk.Button(button_frame, text="Delete", width=15, font=("Arial", 14), command=self.delete_student_page).pack(pady=5)
+
+    def create_table(self):
+        self.cursor.execute('''CREATE TABLE IF NOT EXISTS students (
+                                rno INTEGER PRIMARY KEY,
+                                name TEXT NOT NULL,
+                                sub1 INTEGER NOT NULL,
+                                sub2 INTEGER NOT NULL,
+                                sub3 INTEGER NOT NULL)''')
+        self.conn.commit()
+
+    def open_add_page(self):
+        add_window = tk.Toplevel(self.root)
+        add_window.title("Add Students")
+        add_window.geometry("400x600")
+
+        tk.Label(add_window, text="Enter Roll No:", font=("Arial", 14)).pack(pady=5)
+        ent_rno = tk.Entry(add_window, font=("Arial", 14))
+        ent_rno.pack(pady=5)
+
+        tk.Label(add_window, text="Enter Name:", font=("Arial", 14)).pack(pady=5)
+        ent_name = tk.Entry(add_window, font=("Arial", 14))
+        ent_name.pack(pady=5)
+
+        tk.Label(add_window, text="Enter Subject 1 Marks:", font=("Arial", 14)).pack(pady=5)
+        ent_sub1 = tk.Entry(add_window, font=("Arial", 14))
+        ent_sub1.pack(pady=5)
+
+        tk.Label(add_window, text="Enter Subject 2 Marks:", font=("Arial", 14)).pack(pady=5)
+        ent_sub2 = tk.Entry(add_window, font=("Arial", 14))
+        ent_sub2.pack(pady=5)
+
+        tk.Label(add_window, text="Enter Subject 3 Marks:", font=("Arial", 14)).pack(pady=5)
+        ent_sub3 = tk.Entry(add_window, font=("Arial", 14))
+        ent_sub3.pack(pady=5)
+
+        def save_student():
+            try:
+                rno = int(ent_rno.get())
+                name = ent_name.get()
+                sub1 = int(ent_sub1.get())
+                sub2 = int(ent_sub2.get())
+                sub3 = int(ent_sub3.get())
+
+                self.cursor.execute("INSERT INTO students (rno, name, sub1, sub2, sub3) VALUES (?, ?, ?, ?, ?)",
+                                    (rno, name, sub1, sub2, sub3))
+                self.conn.commit()
+
+                messagebox.showinfo("Success", "Student added successfully!")
+                add_window.destroy()
+            except ValueError:
+                messagebox.showerror("Error", "Please enter valid data.")
+            except sqlite3.IntegrityError:
+                messagebox.showerror("Error", "Roll No already exists.")
+
+        tk.Button(add_window, text="Save", font=("Arial", 14), command=save_student).pack(pady=5)
+        tk.Button(add_window, text="Back", font=("Arial", 14), command=add_window.destroy).pack(pady=5)
+
+    def view_students(self):
+        view_window = tk.Toplevel(self.root)
+        view_window.title("View Students")
+        view_window.geometry("400x400")
+
+        scrolled_text = scrolledtext.ScrolledText(view_window, wrap=tk.WORD, font=("Arial", 12), width=40, height=15)
+        scrolled_text.pack(pady=10)
+
+        self.cursor.execute("SELECT * FROM students")
+        students = self.cursor.fetchall()
+
+        if not students:
+            scrolled_text.insert(tk.END, "No student data available.")
+        else:
+            for student in students:
+                student_info = (f"Roll No: {student[0]}, Name: {student[1]}, "
+                                f"Subject 1: {student[2]}, Subject 2: {student[3]}, "
+                                f"Subject 3: {student[4]}\n")
+                scrolled_text.insert(tk.END, student_info)
+
+    def update_student(self):
+        update_window = tk.Toplevel(self.root)
+        update_window.title("Update Students")
+        update_window.geometry("400x600")
+
+        tk.Label(update_window, text="Enter Roll No to Update:", font=("Arial", 14)).pack(pady=5)
+        ent_rno = tk.Entry(update_window, font=("Arial", 14))
+        ent_rno.pack(pady=5)
+
+        tk.Label(update_window, text="Enter New Name:", font=("Arial", 14)).pack(pady=5)
+        ent_name = tk.Entry(update_window, font=("Arial", 14))
+        ent_name.pack(pady=5)
+
+        tk.Label(update_window, text="Enter New Subject 1 Marks:", font=("Arial", 14)).pack(pady=5)
+        ent_sub1 = tk.Entry(update_window, font=("Arial", 14))
+        ent_sub1.pack(pady=5)
+
+        tk.Label(update_window, text="Enter New Subject 2 Marks:", font=("Arial", 14)).pack(pady=5)
+        ent_sub2 = tk.Entry(update_window, font=("Arial", 14))
+        ent_sub2.pack(pady=5)
+
+        tk.Label(update_window, text="Enter New Subject 3 Marks:", font=("Arial", 14)).pack(pady=5)
+        ent_sub3 = tk.Entry(update_window, font=("Arial", 14))
+        ent_sub3.pack(pady=5)
+
+        def update_student():
+            try:
+                rno = int(ent_rno.get())
+                name = ent_name.get()
+                sub1 = int(ent_sub1.get())
+                sub2 = int(ent_sub2.get())
+                sub3 = int(ent_sub3.get())
+
+                self.cursor.execute("UPDATE students SET name = ?, sub1 = ?, sub2 = ?, sub3 = ? WHERE rno = ?", 
+                                    (name, sub1, sub2, sub3, rno))
+                if self.cursor.rowcount == 0:
+                    messagebox.showerror("Error", "Student not found.")
+                else:
+                    self.conn.commit()
+                    messagebox.showinfo("Success", "Student updated successfully!")
+                    update_window.destroy()
+            except ValueError:
+                messagebox.showerror("Error", "Please enter valid data.")
+
+        tk.Button(update_window, text="Update", font=("Arial", 14), command=update_student).pack(pady=5)
+        tk.Button(update_window, text="Back", font=("Arial", 14), command=update_window.destroy).pack(pady=5)
+
+    def delete_student_page(self):
+        delete_window = tk.Toplevel(self.root)
+        delete_window.title("Delete Student")
+        delete_window.geometry("400x300")
+
+        tk.Label(delete_window, text="Enter Roll No to Delete:", font=("Arial", 14)).pack(pady=5)
+        ent_rno = tk.Entry(delete_window, font=("Arial", 14))
+        ent_rno.pack(pady=5)
+
+        def delete_student():
+            try:
+                rno = int(ent_rno.get())
+                self.cursor.execute("DELETE FROM students WHERE rno = ?", (rno,))
+                if self.cursor.rowcount == 0:
+                    messagebox.showerror("Error", "Student not found.")
+                else:
+                    self.conn.commit()
+                    messagebox.showinfo("Success", "Student deleted successfully!")
+                    delete_window.destroy()
+            except ValueError:
+                messagebox.showerror("Error", "Please enter a valid Roll No.")
+
+        tk.Button(delete_window, text="Delete", font=("Arial", 14), command=delete_student).pack(pady=5)
+        tk.Button(delete_window, text="Back", font=("Arial", 14), command=delete_window.destroy).pack(pady=5)
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = StudentManagementSystem(root)
+    root.mainloop()
